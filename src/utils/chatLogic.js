@@ -39,7 +39,7 @@ const processTextForNLP = (text) => {
   processed = processed.replace(/\s+/g, ' ').trim();
   
   // Remove punctuation that might interfere with matching
-  processed = processed.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '');
+  processed = processed.replace(/[.,/#!$%&*;:{}=\-_`~()]/g, '');
   
   return processed;
 };
@@ -134,8 +134,26 @@ export const processUserMessage = async (message, currentState, context = {}) =>
   if (containsKeywords(message, ['chat freely', 'just want to chat', 'talk freely', 'free chat'])) {
     return {
       role: 'assistant',
-      content: "I'm now in free chat mode. Feel free to ask me anything about pet skin conditions or treatments!",
-      switchToFreeChat: true
+      content: "I'm now in free chat mode. Feel free to ask me anything about pet skin conditions or treatments! If you want to return to structured assistance, select 'Exit free chat'.",
+      switchToFreeChat: true,
+      options: [
+        { value: 'exit_free_chat', label: 'Exit free chat' }
+      ]
+    };
+  }
+  
+  // Check if user wants to exit free chat mode
+  if (currentState === CHAT_STATES.FREE_CHAT && 
+      containsKeywords(message, ['exit', 'exit free chat', 'go back', 'start over', 'restart'])) {
+    return {
+      role: 'assistant',
+      content: "Returning to structured assistance. Please select the type of pet you have:",
+      exitFreeChat: true,
+      options: [
+        { value: PET_TYPES.DOG, label: 'Dog' },
+        { value: PET_TYPES.CAT, label: 'Cat' },
+        { value: 'chat_freely', label: 'I just want to chat freely' }
+      ]
     };
   }
   
@@ -226,7 +244,10 @@ export const processUserMessage = async (message, currentState, context = {}) =>
       
       return {
         role: 'assistant',
-        content: response.content
+        content: response.content,
+        options: [
+          { value: 'exit_free_chat', label: 'Exit free chat' }
+        ]
       };
   }
 }; 

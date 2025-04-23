@@ -1,5 +1,5 @@
 // API Configuration
-export const GROQ_API_KEY = "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";
+export const GROQ_API_KEY = "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";
 export const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 // Pet Types

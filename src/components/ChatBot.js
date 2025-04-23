@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { sendChatMessage } from '../api/chatbotApi';
-import { CHAT_STATES, getWelcomeMessage, processUserMessage } from '../utils/chatLogic';
+import { CHAT_STATES, getDiseaseSelectionMessage, getWelcomeMessage, processUserMessage } from '../utils/chatLogic';
+import { PET_TYPES } from '../utils/config';
 
 const ChatContainer = styled.div`
   display: flex;
@@ -74,6 +75,7 @@ const OptionsContainer = styled.div`
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 10px;
+  padding: 5px 0;
 `;
 
 const OptionButton = styled.button`
@@ -204,6 +206,8 @@ const ChatBot = ({ onMedicineSelect }) => {
         setChatState(CHAT_STATES.MEDICINE_RECOMMENDATION);
       } else if (response.switchToFreeChat) {
         setChatState(CHAT_STATES.FREE_CHAT);
+      } else if (response.exitFreeChat) {
+        setChatState(CHAT_STATES.PET_SELECTION);
       }
       
       // Add bot response to chat and conversation history
@@ -233,30 +237,62 @@ const ChatBot = ({ onMedicineSelect }) => {
     setIsLoading(true);
     
     try {
+      // Check if user wants to exit free chat mode
+      if (input.toLowerCase().includes('exit') || 
+          input.toLowerCase().includes('go back') || 
+          input.toLowerCase().includes('start over')) {
+        
+        setChatState(CHAT_STATES.PET_SELECTION);
+        const welcomeMessage = getWelcomeMessage();
+        setMessages(prev => [...prev, welcomeMessage]);
+        setConversationHistory(prev => [...prev, { 
+          role: 'assistant',
+          content: welcomeMessage.content 
+        }]);
+        setIsLoading(false);
+        return;
+      }
+      
       // Use Groq AI with context from recent conversation history for better context awareness
       const recentMessages = conversationHistory.slice(-6); // Use last 6 messages for context
       
-      const aiResponse = await sendChatMessage([
-        { 
-          role: 'system', 
-          content: 'You are a veterinary assistant for PetCarePal, a service that helps pet owners identify and treat skin conditions in their pets. Provide helpful, accurate, and concise information. Your responses should be friendly and focused on pet health, particularly skin conditions. If asked about medication, you can recommend appropriate treatments but should suggest consulting a veterinarian for serious conditions. Keep responses under 3 paragraphs to be concise but informative.' 
-        },
-        ...recentMessages,
-        { role: 'user', content: input }
-      ]);
+      let aiResponse;
+      try {
+        aiResponse = await sendChatMessage([
+          { 
+            role: 'system', 
+            content: 'You are a veterinary assistant for PetCarePal, a service that helps pet owners identify and treat skin conditions in their pets. Provide helpful, accurate, and concise information. Your responses should be friendly and focused on pet health, particularly skin conditions. If asked about medication, you can recommend appropriate treatments but should suggest consulting a veterinarian for serious conditions. Keep responses under 3 paragraphs to be concise but informative.' 
+          },
+          ...recentMessages,
+          { role: 'user', content: input }
+        ]);
+      } catch (apiError) {
+        console.error('API call failed:', apiError);
+        // Create a fallback response if the API call fails
+        aiResponse = {
+          role: 'assistant',
+          content: "I'm having trouble connecting to my knowledge base right now. Please try again in a moment or exit free chat mode to use the structured assistance."
+        };
+      }
       
       const assistantMessage = { 
         role: 'assistant', 
-        content: aiResponse.content 
+        content: aiResponse.content,
+        options: [
+          { value: 'exit_free_chat', label: 'Exit free chat' }
+        ]
       };
       
       setMessages(prev => [...prev, assistantMessage]);
       setConversationHistory(prev => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Error getting AI response:', error);
+      console.error('Error in free text message handling:', error);
       const errorMessage = { 
         role: 'assistant', 
-        content: 'Sorry, I encountered an error generating a response. Please try again later.' 
+        content: 'Sorry, I encountered an error processing your request. You might want to exit free chat mode and try the structured assistance instead.',
+        options: [
+          { value: 'exit_free_chat', label: 'Exit free chat' }
+        ]
       };
       setMessages(prev => [...prev, errorMessage]);
       setConversationHistory(prev => [...prev, errorMessage]);
@@ -275,10 +311,33 @@ const ChatBot = ({ onMedicineSelect }) => {
       setChatState(CHAT_STATES.FREE_CHAT);
       const message = { 
         role: 'assistant', 
-        content: "I'm now in free chat mode. Feel free to ask me anything about pet skin conditions or treatments!" 
+        content: "I'm now in free chat mode. Feel free to ask me anything about pet skin conditions or treatments!",
+        options: [
+          { value: 'exit_free_chat', label: 'Exit free chat' }
+        ]
       };
       setMessages(prev => [...prev, message]);
       setConversationHistory(prev => [...prev, message]);
+      return;
+    } else if (option.value === 'exit_free_chat') {
+      // Reset to pet selection when exiting free chat
+      setChatState(CHAT_STATES.PET_SELECTION);
+      const welcomeMessage = getWelcomeMessage();
+      setMessages(prev => [...prev, welcomeMessage]);
+      setConversationHistory(prev => [...prev, { 
+        role: 'assistant',
+        content: welcomeMessage.content 
+      }]);
+      return;
+    } else if (option.value === PET_TYPES.DOG || option.value === PET_TYPES.CAT) {
+      // Handle direct pet type selection
+      setChatContext(prev => ({ ...prev, petType: option.value }));
+      setChatState(CHAT_STATES.DISEASE_SELECTION);
+      
+      // Get disease selection message for selected pet type
+      const diseaseMessage = getDiseaseSelectionMessage(option.value);
+      setMessages(prev => [...prev, { ...diseaseMessage, petType: option.value }]);
+      setConversationHistory(prev => [...prev, { role: 'assistant', content: diseaseMessage.content }]);
       return;
     }
     

@@ -367,7 +367,6 @@ const SubmitButton = styled.button`
 
 const MedicineStore = ({ medications, onBackToChat }) => {
   const [cart, setCart] = useState([]);
-  const [notification, setNotification] = useState(null);
   const [checkout, setCheckout] = useState(false);
   const [paymentInfo, setPaymentInfo] = useState({
     name: '',
@@ -454,9 +453,7 @@ const MedicineStore = ({ medications, onBackToChat }) => {
       
       if (formattedValue.length > 0) {
         // Add a slash after the month for MM/YY format
-        if (formattedValue.length <= 2) {
-          formattedValue = formattedValue;
-        } else {
+        if (formattedValue.length > 2) {
           formattedValue = `${formattedValue.substring(0, 2)}/${formattedValue.substring(2, 4)}`;
         }
       }

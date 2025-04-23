@@ -1,6 +1,37 @@
 [build]
-  command = "npm run build"
+  command = "npm run build && cp public/chatbot.html build/ && cp public/embed-example.html build/ && cp public/_redirects build/ && cp public/.htaccess build/ && cp public/web.config build/ && touch build/.nojekyll"
   publish = "build"
+
+[[redirects]]
+  from = "/chatbot.html"
+  to = "/chatbot.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/embed-example.html"
+  to = "/embed-example.html"
+  status = 200
+  force = true
+
+# Permanent 301 redirects for main site integration
+[[redirects]]
+  from = "/pet-health-assistant"
+  to = "/chatbot.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/chatbot"
+  to = "/chatbot.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/chat"
+  to = "/chatbot.html"
+  status = 301
+  force = true
 
 [[redirects]]
   from = "/*"

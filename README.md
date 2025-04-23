@@ -25,6 +25,11 @@ PetCarePal is an AI-powered application designed to help pet owners identify and
 - Quick access to chat assistance from any page
 - Expandable interface for convenience
 
+### 5. Standalone Chatbot Page
+- Dedicated chatbot page that can be embedded in other websites
+- Easy integration through direct links or iframes
+- Maintains the same functionality as the main application
+
 ## Pet Skin Diseases Supported
 
 ### Dogs
@@ -66,6 +71,41 @@ PetCarePal is an AI-powered application designed to help pet owners identify and
    ```
 
 5. Open your browser and navigate to `http://localhost:3000`
+
+### Running the Standalone Chatbot
+
+The project includes a standalone chatbot page that can be embedded in other websites:
+
+1. Build the application:
+   ```
+   npm run build
+   ```
+
+2. The standalone chatbot is available at `/chatbot.html` after building
+   - Example: `http://localhost:3000/chatbot.html` in development mode
+   - Example: `https://your-petcarepal-domain.com/chatbot.html` when deployed
+
+### Embedding the Chatbot in Other Websites
+
+You can embed the PetCarePal chatbot in your website using one of these methods:
+
+#### Option 1: Direct Link
+```html
+<a href="https://your-petcarepal-domain.com/chatbot.html" target="_blank">Open Pet Health Assistant</a>
+```
+
+#### Option 2: Embed in an iframe
+```html
+<iframe 
+  src="https://your-petcarepal-domain.com/chatbot.html" 
+  width="100%" 
+  height="600px" 
+  frameborder="0" 
+  title="PetCarePal Chatbot">
+</iframe>
+```
+
+For a complete example with styling options, see the `/embed-example.html` file.
 
 ## How to Use
 
